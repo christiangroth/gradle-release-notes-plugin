@@ -1,4 +1,4 @@
-name: Docker Image Registry Cleanup
+name: Maven Package Registry Cleanup
 
 on:
   schedule:
