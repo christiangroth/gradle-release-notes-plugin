@@ -18,8 +18,8 @@ jobs:
             const KEEP_MINIMUM = 3;
             const MAX_AGE_DAYS = 180;
             const PACKAGE_TYPE = 'maven';
-            const ORG = christiangroth;
-            const REPO = gradle-release-notes-plugin;
+            const ORG = 'christiangroth';
+            const REPO = 'gradle-release-notes-plugin';
             
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - MAX_AGE_DAYS);
