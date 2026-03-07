@@ -62,11 +62,11 @@ class ReleaseNotesProcessor(
   private val highlightTemplateContent: String
     get() = highlightTemplate.readOrNull() ?: "Good news everyone: {gitbranch} is here."
 
-  private val updateNoticwTemplate: File
+  private val updateNoticeTemplate: File
     get() = templatesFolder.resolve(UPDATE_NOTICE_TEMPLATE_FILE + "." + outputFile.extension)
 
   private val updateNoticeTemplateContent: String
-    get() = updateNoticwTemplate.readOrNull() ?: "Caution, {gitbranch} may eventually break something!"
+    get() = updateNoticeTemplate.readOrNull() ?: "Caution, {gitbranch} may eventually break something!"
 
   private val nextVersionTemplate: File
     get() = templatesFolder.resolve(NEXT_VERSION_TEMPLATE_FILE + "." + outputFile.extension)
@@ -99,7 +99,7 @@ class ReleaseNotesProcessor(
     }
 
     val outputFolder = resolveOutputFolder()
-    if (outputFolder.exists() && outputFolder.listFiles().isEmpty()) {
+    if (outputFolder.exists() && outputFolder.listFiles()?.isEmpty() != false) {
       outputFolder.deleteRecursively()
     }
   }
@@ -108,7 +108,7 @@ class ReleaseNotesProcessor(
     bugfixTemplate.createWithText(bugfixTemplateContent)
     featureTemplate.createWithText(featureTemplateContent)
     highlightTemplate.createWithText(highlightTemplateContent)
-    updateNoticwTemplate.createWithText(updateNoticeTemplateContent)
+    updateNoticeTemplate.createWithText(updateNoticeTemplateContent)
     nextVersionTemplate.createWithText(nextVersionTemplateContent)
   }
 
@@ -184,7 +184,7 @@ class ReleaseNotesProcessor(
 
     val targetFile = resolveTargetFile()
     if (!targetFile.exists()) {
-      targetFile.mkdirs()
+      targetFile.parentFile.mkdirs()
       targetFile.createNewFile()
     }
 
