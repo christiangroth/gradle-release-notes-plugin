@@ -20,8 +20,8 @@ dependencies {
 
 gradlePlugin {
   plugins {
-    create("de.chrgroth.gradle.plugins.release-notes") {
-      id = "de.chrgroth.gradle.plugins.release-notes"
+    create("releaseNotes") {
+      id = "de.chrgroth.gradle.release-notes"
       implementationClass = "de.chrgroth.gradle.plugins.releasenotes.ReleasenotesPlugin"
     }
   }
