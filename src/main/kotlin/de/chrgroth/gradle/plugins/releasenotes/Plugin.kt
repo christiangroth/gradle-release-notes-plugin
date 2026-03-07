@@ -33,6 +33,8 @@ private const val TASK_NAME_VERSION_BUMP = "releasenotesVersionBump"
 
 private const val TASK_PATH_UN_SNAPSHOT_VERSION = ":unSnapshotVersion"
 
+private const val COMMAND_TIMEOUT_SECONDS = 5L
+
 class ReleasenotesPlugin : Plugin<Project> {
   private lateinit var extension: ReleasenotesExtension
 
@@ -41,13 +43,15 @@ class ReleasenotesPlugin : Plugin<Project> {
       project.extensions.add(EXTENSION_NAME, this)
     }
 
-    val numberOfUniqueNames = extension.configurations.distinctBy { it.name }.size
-    if (numberOfUniqueNames != extension.configurations.size) {
-      project.logger.error("All configuration names must be unique!")
-      throw IllegalStateException("Stopping build due to duplicate releasenotes configuration names!")
-    }
-
     project.run {
+
+      project.afterEvaluate {
+        val numberOfUniqueNames = extension.configurations.distinctBy { it.name }.size
+        if (numberOfUniqueNames != extension.configurations.size) {
+          project.logger.error("All configuration names must be unique!")
+          throw IllegalStateException("Stopping build due to duplicate releasenotes configuration names!")
+        }
+      }
 
       tasks.register(TASK_NAME_INIT) {
         group = TASK_GROUP_NAME
@@ -282,7 +286,7 @@ class ReleasenotesPlugin : Plugin<Project> {
         .redirectOutput(ProcessBuilder.Redirect.PIPE)
         .redirectError(ProcessBuilder.Redirect.PIPE)
         .start()
-      proc.waitFor(5, TimeUnit.SECONDS)
+      proc.waitFor(COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
 
       val errorOutput = String(proc.errorStream.use { it.readAllBytes() })
       if (errorOutput.isNotEmpty()) {
@@ -335,20 +339,29 @@ data class ProjectVersion(
     private val versionExtractor: Pattern =
       Pattern.compile("""([0-9]+)(?:.([0-9]+))?(?:.([0-9]+))?([0-9.a-zA-Z-+_]*)""")
 
+    private const val GROUP_MAJOR = 1
+    private const val GROUP_MINOR = 2
+    private const val GROUP_PATCH = 3
+    private const val GROUP_ADDITION = 4
+    private const val GROUP_COUNT_WITHOUT_ADDITION = 3
+
     fun String.toProjectVersion(ticketId: String? = null) = invoke(this, ticketId)
 
     operator fun invoke(projectVersion: String, ticketId: String? = null): ProjectVersion? {
       val matcher = versionExtractor.matcher(projectVersion).apply { find() }
       return try {
         ProjectVersion(
-          major = matcher.group(1).toInt(),
-          minor = matcher.group(2).toInt(),
-          patch = matcher.group(3).toInt(),
-          addition = if (matcher.groupCount() > 3) matcher.group(4) else "",
+          major = matcher.group(GROUP_MAJOR).toInt(),
+          minor = matcher.group(GROUP_MINOR).toInt(),
+          patch = matcher.group(GROUP_PATCH).toInt(),
+          addition = if (matcher.groupCount() > GROUP_COUNT_WITHOUT_ADDITION) matcher.group(GROUP_ADDITION) else "",
           ticketId = ticketId
         )
-      } catch (e: Exception) {
-        logger.error("Unable to parse ProjectVersion from $projectVersion")
+      } catch (e: NumberFormatException) {
+        logger.error("Unable to parse ProjectVersion from $projectVersion", e)
+        null
+      } catch (e: IllegalStateException) {
+        logger.error("Unable to parse ProjectVersion from $projectVersion", e)
         null
       }
     }

@@ -6,6 +6,9 @@ plugins {
   alias(libs.plugins.buildTimeTracker)
   alias(libs.plugins.versionCatalogUpdate)
 
+  alias(libs.plugins.detekt)
+  alias(libs.plugins.kover)
+
   alias(libs.plugins.release)
 }
 
@@ -16,6 +19,25 @@ repositories {
 
 dependencies {
   implementation(libs.grgit)
+
+  testImplementation(libs.junit)
+  testImplementation(libs.assertJ)
+  testRuntimeOnly(libs.junitPlatformLauncher)
+}
+
+detekt {
+  config.setFrom("detekt-config.yaml")
+  buildUponDefaultConfig = true
+}
+
+kover {
+  reports {
+    verify {
+      rule {
+        minBound(40)
+      }
+    }
+  }
 }
 
 gradlePlugin {
@@ -37,6 +59,10 @@ release {
 tasks {
   afterReleaseBuild {
     dependsOn(publish)
+  }
+
+  test {
+    useJUnitPlatform()
   }
 }
 

@@ -2,6 +2,10 @@ config:
   warningsAsErrors: true
 
 complexity:
+  CyclomaticComplexMethod:
+    active: false
+  LongMethod:
+    active: false
   TooManyFunctions:
     ignorePrivate: true
     active: false
