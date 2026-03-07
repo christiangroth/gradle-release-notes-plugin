@@ -31,16 +31,7 @@ The plugin automates the creation, aggregation, and versioning of release notes 
 
 ## 3. Context and Scope
 
-```mermaid
-graph LR
-    Dev["Developer"] -->|"runs releasenotesCreate*"| Plugin["gradle-release-notes-plugin"]
-    Plugin -->|"reads/writes snippets"| SnippetDir["snippets/"]
-    Plugin -->|"reads templates"| TemplateDir["templates/"]
-    Plugin -->|"generates"| OutputFile["RELEASE_NOTES.md"]
-    Plugin -->|"reads branch"| Git["Git repository"]
-    ReleasePlugin["net.researchgate.release"] -->|"triggers afterReleaseBuild"| Plugin
-    Plugin -->|"bumps version in"| GradleProps["gradle.properties"]
-```
+![Context diagram](https://kroki.io/plantuml/svg/eNplks1OwzAQhO9-ihVHpKR3DqhAAxdEq6Z35CZb18KxrfWmqG_P5qdtUk6xN9-MPKNdJtbEbeOUwwMDByBrjgy1JazYBq_Sj_VRk26gCk0MHj2XfHYIHaC9caiUrjgQrPCELkQkdSXhwZCuHWaEDnXCzAfGlEXXGusfQCfY9MepInkbI3Ja9P_L4bayM1fGJjotVgO0G6931Lb4LF7K4vtrvSvKvKl7dt1ybPndyrsn6IdlCRRDspLk3IMy-h8kj9QlZItpgPrpRoZpCnvknDChpupo5GH5mL_XbIfzmFxda4Msex77gCeg1icYZX1rb4Ti9KhGooNv5XQC1HVa_JIVFi4lTulJSxccrkVOwVtFwhn0SPdEV9fFYk_aV0c1SzWPwrJTBimBPjDSCL621tUzz1uVotm3jXxPopIlBOlpib6WPf0D7zv1Kw==)
 
 ---
 
@@ -56,60 +47,7 @@ graph LR
 
 ### 5.1 Top-level decomposition
 
-```mermaid
-classDiagram
-    class ReleasenotesPlugin {
-        +apply(project)
-    }
-    class ReleasenotesExtension {
-        +mainBranch: String
-        +skipReleaseNotesOnBranchPrefixes: List
-        +configure(provider)
-    }
-    class ReleasenotesConfiguration {
-        +name: String
-        +outputPath: String
-        +snippetsPath: String
-        +templatesPath: String
-        +init(projectDir, buildDir) ReleaseNotesProcessor
-    }
-    class ReleaseNotesProcessor {
-        +createFolderStructure()
-        +createTemplatesFiles()
-        +createBugfix(branch)
-        +createFeature(branch)
-        +createHighlight(branch)
-        +createUpdateNotice(branch)
-        +buildReleasenotes(...)
-        +copyBuiltReleaseNotesToSources()
-        +deleteSnippets()
-        +hasFeatureSnippets() Boolean
-        +hasUpdateNoticeSnippets() Boolean
-    }
-    class ProjectVersion {
-        +major: Int
-        +minor: Int
-        +patch: Int
-        +addition: String
-        +ticketId: String?
-        +compareTo(other) Int
-        +toString() String
-        +invoke(String, String?) ProjectVersion?
-    }
-    class ReleasenoteSnippetType {
-        <<enumeration>>
-        FEATURE
-        BUGFIX
-        HIGHLIGHT
-        UPDATENOTICE
-    }
-
-    ReleasenotesPlugin --> ReleasenotesExtension : creates
-    ReleasenotesPlugin --> ProjectVersion : uses
-    ReleasenotesExtension "1" *-- "many" ReleasenotesConfiguration
-    ReleasenotesConfiguration --> ReleaseNotesProcessor : creates via init()
-    ReleaseNotesProcessor --> ReleasenoteSnippetType : classifies files by
-```
+![Class diagram](https://kroki.io/plantuml/svg/eNp1VMFu4kAMvecrRpxgtyDtNYdtSwsFqWqjEqq9DokBl2RmNOOgotX--3pIUoYUDokm9rP9nsfOnSNpqSqLKCukc-INCpAOlCZwSVFtUIm_kRA_pTHFoW-s_oCMBtG_C_DJJ4FyqJuIUqIaW6mybSwWZFFtvNXt0DRBLz7otcEkFtb4CS4Wz-jIIzOt1ripLPiqe8zBXi770OAkfZVWsoSwqK7IVJRIOqei0Bgg17UTlKaQXn_HgQqpbcEj2huxqrDI-TSIRagpsToD57Tt8j331lwzC1xrqgsWyKWqjLzkwcmVtnSmWIALPeNqwz3rr44NDOxTfvkk3xwz3GwLfui7a2lyfjNBzM4CjxLDdvdHo1Edp81hzF4KxaV6oSubtTxzdhEsmkbXtq10DcGTPRZjrTmLagAhm0uotq9JfRnvYMO5-9A2FnN1nKISVfBlJPlxbL5knqMfmrPLx2wHNM9b220ttTTSQqr7mrbgr7vJQLpGeW7hnOz1Dvq14aZNxJBzurcsA1RVhtPciE0PBo5qppP7dPk24dN4-TSd_-HDbP40e-Yn5fMyebxPJy-v6fxhwtmiC9s7HP6-sqWxqK_eXQvrdDcWleuAT8l6v3rix3AoeqVUh971BY2ur27AtLMoX0zFHqU4ruEgugztyA37yVn80OAaOdHaL5NYHaI7UDn__v4DeHm9vg==)
 
 ---
 
@@ -117,63 +55,15 @@ classDiagram
 
 ### 6.1 Snippet creation (developer workflow)
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Gradle as Gradle
-    participant Plugin as ReleasenotesPlugin
-    participant Proc as ReleaseNotesProcessor
-    participant FS as File System
-    participant Git as Git
-
-    Dev->>Gradle: ./gradlew releasenotesCreateFeature
-    Gradle->>Plugin: execute task
-    Plugin->>Git: read current branch name
-    Git-->>Plugin: "feature/my-cool-thing"
-    Plugin->>Proc: createFeature("my-cool-thing")
-    Proc->>FS: read feature template (or use default)
-    Proc->>FS: write snippets/my-cool-thing-feature.md
-    FS-->>Dev: snippet file ready for editing
-```
+![Snippet creation sequence](https://kroki.io/plantuml/svg/eNptkkFuwyAQRfecYuRVunCy96KK1MrdRVV9AorHCSoGBENT376DQ1pTdWPD8P6fz9jHSDJQmo3w_NZKe2kJnvETjfMYqupLkKPBqvSGBmVE6wjjq0lnbUFGuK3-A08rGJzCGF1YWd5UZNNrgzAskXBuMtEPdQpNQvwEhPax5IIO9ofzurxC2OR6CigJe36kgKLALCt5O8AvVIkQSMYPUarZVhMfsngElUJA7v0epFUXsHJmIz5utzbNdGtxmJdWOWdaumh7bjaO-a4Mqm2gXVPjD2KlmO6He_tiDDwRb1gKO55diggjTjIZ-qO5Bs1MtNp7pFjHaYvXfh4Fw_kCv7Ps7iKY8jfIvReYuBeOmlgsjmhH_le-ATY8xc0=)
 
 ### 6.2 Release notes generation
 
-```mermaid
-sequenceDiagram
-    participant Gradle as Gradle
-    participant Plugin as ReleasenotesPlugin
-    participant Proc as ReleaseNotesProcessor
-    participant FS as File System
-
-    Gradle->>Plugin: execute releasenotesGenerate
-    Plugin->>Proc: buildReleasenotes(branch, version)
-    Proc->>FS: list snippet files in snippets/
-    Proc->>Proc: renderSnippets(FEATURE, header, footer)
-    Proc->>Proc: renderSnippets(BUGFIX, header, footer)
-    Proc->>Proc: renderSnippets(HIGHLIGHT, header, footer)
-    Proc->>Proc: renderSnippets(UPDATENOTICE, header, footer)
-    Proc->>Proc: apply next-version template
-    Proc->>FS: write build/releasenotes/<name>/RELEASE_NOTES.md
-    Note over Proc,FS: prepends new version block to existing content
-```
+![Release notes generation sequence](https://kroki.io/plantuml/svg/eNqVktFrwjAQxt_zVxw-KdT1fQzRbWkVxImtsDeJ7alhaRKSdOp_v7N2o8JAfChtLr_77uO-jn0QLtSVYpbespBW6ACpE6XCm9IKFQqP2gT0S1XvpQbh4fr1H7hoQGcK9N64hqXDDdlLpELIzj5g1bsQScbYdTQMR602PAOesKgDgutYSFGjEwFZS1140id6W0tVdt32t07o4hDBNzovjR6whqSOJCNeSR_Aa2ktBtiRIw-k1xZ8_Ae38g51iS5rr_sJn-TrFY_ggILqEewMzXSDO22v6zSZfT7aNZ2l0zk9-aON6-X7JOeLj3z2dt-qsFadQeMpDNuNAQVkVbPt7uaOTlIqzb7jbjbxixYVjuIVn_NJxjc0l2dPVckut2BItBkVXVWsQ0tuPU08_kYEW2WKLwiGsqd4pN5DYXRAHdiYWPpdfwBeq_C_)
 
 ### 6.3 Release lifecycle integration
 
-```mermaid
-sequenceDiagram
-    participant Release as net.researchgate.release
-    participant Plugin as ReleasenotesPlugin
-
-    Release->>Plugin: unSnapshotVersion
-    Plugin->>Plugin: releasenotesVersionBump
-    Note over Plugin: major bump if UPDATENOTICE snippets exist
-    Note over Plugin: minor bump if FEATURE snippets exist
-    Note over Plugin: otherwise patch (handled by release plugin)
-    Release->>Release: tag & push
-    Release->>Plugin: afterReleaseBuild
-    Plugin->>Plugin: releasenotesCopyToSources
-    Plugin->>Plugin: releasenotesDeleteSnippets
-```
+![Release lifecycle sequence](https://kroki.io/plantuml/svg/eNqNUstOwzAQvPsrVj0gOMAH9ID6ChIXqJqU-zbZxkaObXnXQP8el7oiSJXKyeN5rLwjz1gwShqsCvk0rQnoBCaO5CESE8ZW9yiUL5aQaQLIsDnhP4nCOS_Ea5t6447OE1KqqHD_WCiYQnK1w8DayxtFNt6pIo1NcTS22BZpCOpIgP-g-Gsd8N1H2GUVzB6269W8qV5em-dlBexMCCQM9GVYLoaNG4Wfqnmz3fwn50VT_DR5tYDSarjV6DpLHewO57dD-DHfjUs4wykI9nADIbG-WBLuhWIRFsnY7lpJSx8Oja99ii3xNfMqY6G6bKlm5Lr8E74Buxe9Jg==)
 
 ---
 
