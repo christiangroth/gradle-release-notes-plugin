@@ -246,7 +246,7 @@ class ReleaseNotesProcessor(
     targetFile.copyTo(outputFile, overwrite = true)
   }
 
-  private fun resolveTargetFile() = resolveTargetFolder().resolve(outputFile.absolutePath.substringAfterLast("/"))
+  private fun resolveTargetFile() = resolveTargetFolder().resolve(outputFile.name)
 
   private fun resolveTargetFolder() = resolveOutputFolder().resolve(name)
 
