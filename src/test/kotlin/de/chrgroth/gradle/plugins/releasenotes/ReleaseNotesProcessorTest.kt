@@ -211,6 +211,24 @@ class ReleaseNotesProcessorTest {
   }
 
   @Test
+  fun `buildReleasenotes handles pre-existing empty tracked output file without deleting it`() {
+    outputFile.parentFile.mkdirs()
+    outputFile.createNewFile()
+    processor.createFeature("feature/fresh-checkout")
+
+    processor.buildReleasenotes(
+      skipReleaseNotesOnBranchPrefixes = emptyList(),
+      branchName = "feature/fresh-checkout",
+      versionReplacement = "1.0.0",
+    )
+
+    assertThat(outputFile).exists()
+    val targetFile = buildDir.resolve("releasenotes/test/RELEASE_NOTES.md")
+    assertThat(targetFile).exists()
+    assertThat(targetFile.readText()).contains("1.0.0")
+  }
+
+  @Test
   fun `copyBuiltReleaseNotesToSources copies generated file back to output`() {
     processor.createFolderStructure()
     processor.createFeature("feature/a-feature")
